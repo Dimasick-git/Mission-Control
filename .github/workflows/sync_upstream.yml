@@ -26,7 +26,7 @@ jobs:
           git config user.name  'ryazhenka-sync-bot'
           git config user.email 'ryazhenka-sync-bot@users.noreply.github.com'
 
-      - name: Add upstream remote &amp; fetch
+      - name: Add upstream remote & fetch
         run: |
           git remote add upstream https://github.com/ndeadly/MissionControl.git
           git fetch upstream master --tags
@@ -65,8 +65,8 @@ jobs:
             echo "Merge produced conflicts; auto-resolving protected paths to 'ours'..."
             # For each protected path that has a conflict, force our version
             while IFS= read -r path; do
-              # skip comments &amp; blank lines
-              [[ -z "$path" || "$path" == \#* ]] &amp;&amp; continue
+              # skip comments & blank lines
+              [[ -z "$path" || "$path" == \#* ]] && continue
               # Use git ls-files to expand globs
               for f in $(git ls-files --unmerged | awk '{print $4}' | sort -u); do
                 case "$f" in
