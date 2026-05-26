@@ -7,7 +7,7 @@
 
 # Mission-Control (Ryazhenka edition)
 
-**EN:** Ryazhenka fork of [ndeadly/MissionControl](https://github.com/ndeadly/MissionControl) — the sysmodule that lets you pair non-Switch Bluetooth controllers (PlayStation, Xbox, Wii, 8BitDo, etc.) natively on a hacked Nintendo Switch. This fork tracks upstream daily and adds one substantive patch: every emulated controller class now reports its real vendor body/buttons colour through virtual SPI (0x6050), so DualSense shows up as white in the system menu, DualShock 4 as black, Xbox as carbon, and so on — instead of every pad falling back to the generic gray default that some firmwares render as the unrecognised-pair yellow/blue palette. Config path remains `/config/MissionControl/` for drop-in compatibility with the vanilla module.
+**EN:** Ryazhenka fork of [ndeadly/MissionControl](https://github.com/ndeadly/MissionControl) — the sysmodule that lets you pair non-Switch Bluetooth controllers (PlayStation, Xbox, Wii, 8BitDo, etc.) natively on a hacked Nintendo Switch. This fork tracks upstream daily and ships two colour-related patches: (1) it **removes** the upstream `language == Russian` SPI 0x6050 override that rewrote every controller's body/buttons colour to `#FFD700 / #0057B7` (yellow + blue) — affecting real Joy-Cons and Pro Controllers, not just emulated pads; (2) every emulated controller class now reports its real vendor RGB through virtual SPI, so DualSense shows up as white in the system menu, DualShock 4 as black, Xbox as carbon, and so on. Config path remains `/config/MissionControl/` for drop-in compatibility with the vanilla module.
 
 ---
 
@@ -21,7 +21,8 @@
 
 | Что | Где живёт | Зачем |
 |------|-----------|-------|
-| **Заводские цвета корпуса/кнопок для каждого эмулированного контроллера** | `mc_mitm/source/controllers/*.hpp` (10 классов) + `virtual_spi_flash.cpp::WriteColours()` | В ванильном модуле все эмулированные контроллеры репортят серые цвета `{0x32,0x32,0x32}`. Некоторые ревизии HOS отображают такой "пустой" контроллер дефолтной жёлто-синей палитрой нераспознанной пары. Теперь DualSense приходит белым, DualShock 4 — чёрным, Xbox One — карбоновым и т.д. Подробнее: [`docs/RU/controllers.md`](docs/RU/controllers.md). |
+| **Удалена подмена цветов 0x6050 на жёлто-синий для русского языка** | `mc_mitm/source/controllers/switch_controller.cpp` и `emulated_switch_controller.cpp` | В ванильном модуле при `GetSystemLanguage() == 10` (русский) каждый SPI-read контроллера по адресу 0x6050 переписывался байтами `{0xff,0xd7,0x00, 0x00,0x57,0xb7, ...}` = `#FFD700 / #0057B7`. Это касалось **всех** контроллеров, в том числе настоящих Joy-Cons и Pro Controller — у русскоязычных пользователей они отображались в системе с жёлтым корпусом и синими кнопками вместо реальных заводских цветов. Блоки удалены целиком. |
+| **Заводские цвета корпуса/кнопок для каждого эмулированного контроллера** | `mc_mitm/source/controllers/*.hpp` (10 классов) + `virtual_spi_flash.cpp::WriteColours()` | В ванильном модуле все эмулированные контроллеры репортят серые цвета `{0x32,0x32,0x32}`. Теперь DualSense приходит белым, DualShock 4 — чёрным, Xbox One — карбоновым и т.д. Подробнее: [`docs/RU/controllers.md`](docs/RU/controllers.md). |
 | **Версия 15.1.1** (вместо 0.15.1) | `Makefile` | Поднята согласно нашей внутренней нумерации Ряженки. Совместима с тем же ams >=1.11.1 / HOS до 22.1.0, что и upstream. |
 | **Makefile fallback на `v15.1.1`** | `Makefile:6` | CI shallow-checkout без тегов больше не падает с `unknown` версией. |
 | **CI/CD набор** | `.github/workflows/{build,release,sync_upstream,verify_build}.yml` | Ежедневный sync с ndeadly/MissionControl (PR, не прямой merge), автосборка через `devkitpro/devkita64` Docker, авто-релиз при пуше тега или изменении Makefile. |

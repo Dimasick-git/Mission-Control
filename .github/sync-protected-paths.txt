@@ -21,8 +21,13 @@ scripts/**
 # Брендинг
 mc_mitm/toolbox.json
 
-# Per-controller body colours patch (Phase 1)
+# Per-controller body colours patch (Phase 1) + Russian-language colour
+# override removal (Phase 8). switch_controller.cpp and
+# emulated_switch_controller.cpp had upstream blocks that rewrote SPI
+# 0x6050 colour responses to #FFD700/#0057B7 (yellow+blue) whenever the
+# console language was Russian (10) — we deleted those blocks.
 mc_mitm/source/controllers/switch_controller.hpp
+mc_mitm/source/controllers/switch_controller.cpp
 mc_mitm/source/controllers/virtual_spi_flash.hpp
 mc_mitm/source/controllers/virtual_spi_flash.cpp
 mc_mitm/source/controllers/emulated_switch_controller.cpp

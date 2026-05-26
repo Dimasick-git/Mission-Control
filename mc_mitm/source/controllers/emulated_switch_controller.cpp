@@ -301,12 +301,11 @@ namespace ams::controller {
 
         R_TRY(m_virtual_memory.Read(read_addr, response.data.serial_flash_read.data, read_size));
 
-        if (read_addr == 0x6050) {
-            if (ams::mitm::GetSystemLanguage() == 10) {
-                const u8 data[] = { 0xff, 0xd7, 0x00, 0x00, 0x57, 0xb7, 0x00, 0x57, 0xb7, 0x00, 0x57, 0xb7 };
-                std::memcpy(response.data.serial_flash_read.data, data, sizeof(data));
-            }
-        }
+        // Ryazhenka: removed upstream's #FFD700 / #0057B7 (yellow/blue)
+        // body+buttons colour substitution that triggered only when the
+        // console language was Russian (10). It overrode our
+        // WriteColours() per-class palette and made every emulated
+        // controller show yellow-and-blue regardless of vendor.
 
         return this->FakeHidCommandResponse(&response);
     }

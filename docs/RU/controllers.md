@@ -1,11 +1,45 @@
 # Поддерживаемые контроллеры и заводские цвета
 
-Этот файл описывает per-controller цветовой патч Ryazhenka-форка
-([CHANGELOG 15.1.1](../../CHANGELOG.md#1511--2026-05-26)) и связывает
-имена классов C++ с RGB-значениями, которые они теперь репортят через
-виртуальный SPI flash (адрес `0x6050`).
+Этот файл описывает **два** цветовых патча Ryazhenka-форка
+([CHANGELOG 15.1.1](../../CHANGELOG.md#1511--2026-05-26)):
 
-## Зачем
+1. **Удаление upstream-подмены 0x6050 для русского языка** — главный
+   баг, ради которого форк затевался.
+2. **Per-controller заводские цвета** через виртуальный SPI flash для
+   эмулированных контроллеров.
+
+## Патч #1: убираем подмену цветов на жёлто-синий для русскоязычных
+
+В upstream MissionControl в двух местах был хардкод, который при
+`ams::mitm::GetSystemLanguage() == 10` (SetLanguage_Russian) переписывал
+ответ контроллера на SPI-чтение по адресу 0x6050 байтами:
+
+```cpp
+{0xff, 0xd7, 0x00,   // body    = #FFD700 (украинский жёлтый)
+ 0x00, 0x57, 0xb7,   // buttons = #0057B7 (украинский синий)
+ 0x00, 0x57, 0xb7,   // left_grip
+ 0x00, 0x57, 0xb7};  // right_grip
+```
+
+Места:
+
+- [`switch_controller.cpp::HandleDataReportEvent`](../../mc_mitm/source/controllers/switch_controller.cpp) —
+  перехватчик ответов для **всех** подключенных контроллеров, включая
+  настоящие Joy-Cons и Pro Controller.
+- [`emulated_switch_controller.cpp::HandleHidCommandSerialFlashRead`](../../mc_mitm/source/controllers/emulated_switch_controller.cpp) —
+  перехватчик для эмулированных контроллеров (поверх нашего
+  `WriteColours()` — то есть даже после Phase 1 этот блок перетирал
+  настоящие vendor-цвета у пользователей с русским языком системы).
+
+В результате у любого пользователя с языком системы "Русский" **все**
+подключенные через MissionControl контроллеры отображались в меню
+`Контроллеры → Изменить хват и порядок` с жёлтым корпусом и синими
+кнопками — то, что показано на скриншоте в нашем тикете.
+
+В Ryazhenka-форке оба блока удалены безусловно. Теперь Switch получает
+честный SPI-ответ независимо от языка системы.
+
+## Патч #2: per-controller real factory colours для эмулированных
 
 В ванильном `ndeadly/MissionControl` файл
 [`virtual_spi_flash.cpp`](../../mc_mitm/source/controllers/virtual_spi_flash.cpp)
