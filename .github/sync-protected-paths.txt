@@ -1,0 +1,41 @@
+# Файлы и директории, которые daily sync-бот защищает от перетирания
+# upstream-изменениями. Если upstream трогает что-то из этого списка —
+# конфликт оставляется на разрешение в PR (мы выбираем нашу версию).
+#
+# Один путь на строку. Поддерживается glob через **.
+# Строки начинающиеся с # — комментарии.
+
+# Документация форка (наша)
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/RU/**
+
+# CI/CD форка (наша)
+.github/workflows/**
+.github/sync-protected-paths.txt
+
+# Локальный сборщик
+scripts/**
+
+# Брендинг
+mc_mitm/toolbox.json
+
+# Per-controller body colours patch (Phase 1)
+mc_mitm/source/controllers/switch_controller.hpp
+mc_mitm/source/controllers/virtual_spi_flash.hpp
+mc_mitm/source/controllers/virtual_spi_flash.cpp
+mc_mitm/source/controllers/emulated_switch_controller.cpp
+mc_mitm/source/controllers/dualsense_controller.hpp
+mc_mitm/source/controllers/dualshock4_controller.hpp
+mc_mitm/source/controllers/dualshock3_controller.hpp
+mc_mitm/source/controllers/xbox_one_controller.hpp
+mc_mitm/source/controllers/wii_controller.hpp
+mc_mitm/source/controllers/8bitdo_controller.hpp
+mc_mitm/source/controllers/razer_controller.hpp
+mc_mitm/source/controllers/powera_controller.hpp
+mc_mitm/source/controllers/nvidia_shield_controller.hpp
+mc_mitm/source/controllers/steelseries_controller.hpp
+
+# Makefile (поднята версия 15.1.1 + fallback)
+Makefile

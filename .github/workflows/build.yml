@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'docs/**'
+      - '.github/sync-protected-paths.txt'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build mc_mitm sysmodule
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout (with submodules and tags)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Mark workspace as safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install libjpeg-turbo (libstratosphere dep)
+        run: |
+          set -e
+          dkp-pacman -S --noconfirm switch-libjpeg-turbo
+
+      - name: Show derived version
+        run: |
+          GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo v15.1.1)
+          echo "Building tag: $GIT_TAG"
+          echo "GIT_TAG=$GIT_TAG" >> $GITHUB_ENV
+
+      - name: make dist
+        run: make dist -j$(nproc)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MissionControl-${{ env.GIT_TAG }}-${{ github.run_number }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30

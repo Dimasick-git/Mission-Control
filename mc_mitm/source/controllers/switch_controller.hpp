@@ -416,6 +416,15 @@ namespace ams::controller {
 
             virtual bool IsOfficialController() { return true; }
 
+            // Factory body/buttons colours reported via virtual SPI at 0x6050.
+            // Override in emulated controller classes to expose vendor-accurate
+            // colours in the Switch controller menu. Default neutral gray
+            // preserves upstream behaviour for callers that don't override.
+            virtual RGBColour GetBodyColour()      const { return RGBColour{0x32, 0x32, 0x32}; }
+            virtual RGBColour GetButtonsColour()   const { return RGBColour{0xe6, 0xe6, 0xe6}; }
+            virtual RGBColour GetLeftGripColour()  const { return RGBColour{0x46, 0x46, 0x46}; }
+            virtual RGBColour GetRightGripColour() const { return RGBColour{0x46, 0x46, 0x46}; }
+
             virtual Result Initialize();
 
             virtual Result HandleDataReportEvent(const bluetooth::HidReportEventInfo *event_info);

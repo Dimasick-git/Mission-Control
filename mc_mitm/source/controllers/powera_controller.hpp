@@ -74,6 +74,12 @@ namespace ams::controller {
 
             PowerAController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
+            // PowerA / Moga Pro black plastic with white buttons
+            RGBColour GetBodyColour()      const override { return RGBColour{0x12, 0x12, 0x12}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0xff, 0xff, 0xff}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x12, 0x12, 0x12}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x12, 0x12, 0x12}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

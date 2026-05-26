@@ -158,6 +158,12 @@ namespace ams::controller {
 
             SteelseriesController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
+            // SteelSeries Stratus / Nimbus matte black with light buttons
+            RGBColour GetBodyColour()      const override { return RGBColour{0x16, 0x16, 0x16}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0xb0, 0xb0, 0xb0}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x16, 0x16, 0x16}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x16, 0x16, 0x16}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

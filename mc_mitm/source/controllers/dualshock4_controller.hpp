@@ -215,6 +215,12 @@ namespace ams::controller {
             Result SetPlayerLed(u8 led_mask);
             Result SetLightbarColour(RGBColour colour);
 
+            // DualShock 4 "Jet Black" stock colours
+            RGBColour GetBodyColour()      const override { return RGBColour{0x00, 0x00, 0x00}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0xff, 0xff, 0xff}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

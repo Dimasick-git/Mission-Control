@@ -18,16 +18,27 @@
 
 namespace ams::controller {
 
+    struct RGBColour;
+
     class VirtualSpiFlash {
         public:
             VirtualSpiFlash() {};
             ~VirtualSpiFlash();
-            
+
             Result Initialize(const char *path);
             Result Read(int offset, void *data, size_t size);
             Result Write(int offset, const void *data, size_t size);
             Result SectorErase(int offset);
             Result CheckMemoryRegion(int offset, size_t size, bool *is_initialized);
+
+            // Force-overwrite the four factory colour fields at 0x6050.
+            // Called by EmulatedSwitchController after Initialize() so each
+            // controller class can publish vendor-accurate body/button colours
+            // regardless of what's persisted in the on-disk SPI image.
+            Result WriteColours(const RGBColour &body,
+                                const RGBColour &buttons,
+                                const RGBColour &left_grip,
+                                const RGBColour &right_grip);
 
         private:
             Result CreateFile(const char *path);

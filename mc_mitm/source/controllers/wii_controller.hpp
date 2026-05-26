@@ -502,6 +502,13 @@ namespace ams::controller {
             Result SetVibration(const SwitchMotorData *motor_data);
             Result CancelVibration();
             Result SetPlayerLed(u8 led_mask);
+
+            // Wii Remote / Wii U Pro stock colours (white shell, black grips)
+            RGBColour GetBodyColour()      const override { return RGBColour{0xff, 0xff, 0xff}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0x32, 0x32, 0x32}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x14, 0x14, 0x14}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x14, 0x14, 0x14}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         protected:

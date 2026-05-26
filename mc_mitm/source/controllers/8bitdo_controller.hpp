@@ -167,6 +167,12 @@ namespace ams::controller {
                     m_controller_type = EightBitDoControllerType_Other;
             }
 
+            // 8BitDo SN30 Pro family cream/yellow stock colours
+            RGBColour GetBodyColour()      const override { return RGBColour{0xf3, 0xe2, 0xc4}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0x6b, 0x6b, 0x6b}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0xf3, 0xe2, 0xc4}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0xf3, 0xe2, 0xc4}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

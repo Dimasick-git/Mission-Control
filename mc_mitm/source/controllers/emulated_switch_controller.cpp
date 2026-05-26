@@ -53,6 +53,13 @@ namespace ams::controller {
 
         R_TRY(m_virtual_memory.Initialize((controller_dir + "/spi_flash.bin").c_str()));
 
+        // Publish vendor-accurate factory colours so the Switch controller
+        // menu doesn't fall back to a generic palette for every emulated pad.
+        R_TRY(m_virtual_memory.WriteColours(this->GetBodyColour(),
+                                            this->GetButtonsColour(),
+                                            this->GetLeftGripColour(),
+                                            this->GetRightGripColour()));
+
         R_SUCCEED();
     }
 

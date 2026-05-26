@@ -1,0 +1,32 @@
+name: Verify build (PR smoke test)
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'docs/**'
+
+jobs:
+  smoke:
+    name: make (no dist, no upload)
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout (with submodules and tags)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Mark workspace as safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install libjpeg-turbo
+        run: dkp-pacman -S --noconfirm switch-libjpeg-turbo
+
+      - name: make
+        run: make -j$(nproc)

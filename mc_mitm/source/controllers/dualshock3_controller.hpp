@@ -109,6 +109,12 @@ namespace ams::controller {
             Result CancelVibration();
             Result SetPlayerLed(u8 led_mask);
 
+            // DualShock 3 charcoal black with silver buttons
+            RGBColour GetBodyColour()      const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0xb0, 0xb0, 0xb0}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

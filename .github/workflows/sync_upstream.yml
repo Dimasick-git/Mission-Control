@@ -1,0 +1,141 @@
+name: Sync from upstream
+
+on:
+  schedule:
+    # 03:00 UTC every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Pull ndeadly/MissionControl into a sync branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  'ryazhenka-sync-bot'
+          git config user.email 'ryazhenka-sync-bot@users.noreply.github.com'
+
+      - name: Add upstream remote &amp; fetch
+        run: |
+          git remote add upstream https://github.com/ndeadly/MissionControl.git
+          git fetch upstream master --tags
+
+      - name: Check whether sync is needed
+        id: check
+        run: |
+          set -e
+          BEHIND=$(git rev-list --count main..upstream/master)
+          echo "Commits behind upstream: $BEHIND"
+          echo "behind=$BEHIND" >> $GITHUB_OUTPUT
+          if [ "$BEHIND" -eq 0 ]; then
+            echo "Already up to date — nothing to do."
+          fi
+
+      - name: Create sync branch
+        if: steps.check.outputs.behind != '0'
+        id: branch
+        run: |
+          set -e
+          DATE=$(date -u +%Y-%m-%d)
+          BRANCH="sync/upstream-$DATE"
+          # Force a fresh branch off main each run
+          git checkout -B "$BRANCH" main
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Merge upstream (favour ours for protected paths)
+        if: steps.check.outputs.behind != '0'
+        id: merge
+        run: |
+          set -e
+          # Try a normal merge first
+          if git merge --no-ff --no-edit upstream/master; then
+            echo "clean=true" >> $GITHUB_OUTPUT
+          else
+            echo "Merge produced conflicts; auto-resolving protected paths to 'ours'..."
+            # For each protected path that has a conflict, force our version
+            while IFS= read -r path; do
+              # skip comments &amp; blank lines
+              [[ -z "$path" || "$path" == \#* ]] &amp;&amp; continue
+              # Use git ls-files to expand globs
+              for f in $(git ls-files --unmerged | awk '{print $4}' | sort -u); do
+                case "$f" in
+                  $path)
+                    echo "  keeping ours: $f"
+                    git checkout --ours -- "$f"
+                    git add "$f"
+                    ;;
+                esac
+              done
+            done < .github/sync-protected-paths.txt
+            # Check if anything still conflicting
+            if git ls-files --unmerged | grep -q .; then
+              echo "Conflicts remain in non-protected paths — PR will be opened with conflicts inline for manual resolution."
+              # Commit what we have so the PR shows the state
+              git commit --no-edit -a || true
+              echo "clean=false" >> $GITHUB_OUTPUT
+            else
+              git commit --no-edit
+              echo "clean=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Push sync branch
+        if: steps.check.outputs.behind != '0'
+        run: git push --force-with-lease origin "${{ steps.branch.outputs.branch }}"
+
+      - name: Open pull request
+        if: steps.check.outputs.behind != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          BEHIND="${{ steps.check.outputs.behind }}"
+          CLEAN="${{ steps.merge.outputs.clean }}"
+          TITLE="Sync upstream ($BEHIND new commits) — $(date -u +%Y-%m-%d)"
+          UPSTREAM_LOG=$(git log --oneline main..upstream/master | head -50)
+          if [ "$CLEAN" = "true" ]; then
+            STATUS="Auto-merge clean ✅ — ready to merge after CI passes."
+          else
+            STATUS="⚠️ Merge had conflicts. Protected paths were auto-resolved to 'ours'; non-protected conflicts remain inline for manual fix."
+          fi
+          BODY=$(cat <<EOF
+          Automated daily sync from \`ndeadly/MissionControl:master\`.
+
+          **Commits behind**: $BEHIND
+          **Status**: $STATUS
+
+          ## Upstream commits in this sync
+
+          \`\`\`
+          $UPSTREAM_LOG
+          \`\`\`
+
+          ## Protected files
+
+          Our Ryazhenka-specific patches (per-controller colours, README/CHANGELOG/docs, CI workflows, toolbox.json branding) are listed in [\`.github/sync-protected-paths.txt\`](.github/sync-protected-paths.txt) and were preserved automatically if they conflicted.
+
+          ---
+
+          _Opened by \`sync_upstream.yml\`. Close without merging if upstream changes shouldn't be adopted._
+          EOF
+          )
+          # Reuse existing PR for this branch if present
+          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh pr edit "$EXISTING" --title "$TITLE" --body "$BODY"
+            echo "Updated existing PR #$EXISTING"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY"
+          fi

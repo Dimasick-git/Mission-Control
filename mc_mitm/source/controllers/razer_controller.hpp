@@ -74,6 +74,12 @@ namespace ams::controller {
 
             RazerController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
+            // Razer black shell with signature green accents
+            RGBColour GetBodyColour()      const override { return RGBColour{0x00, 0x00, 0x00}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0x44, 0xd6, 0x2c}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x00, 0x00, 0x00}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x00, 0x00, 0x00}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

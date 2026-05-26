@@ -78,6 +78,12 @@ namespace ams::controller {
 
             NvidiaShieldController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
+            // NVIDIA Shield matte black with green accents
+            RGBColour GetBodyColour()      const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0x76, 0xb9, 0x00}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

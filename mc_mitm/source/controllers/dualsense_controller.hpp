@@ -177,6 +177,12 @@ namespace ams::controller {
             Result SetPlayerLed(u8 led_mask);
             Result SetLightbarColour(RGBColour colour);
 
+            // DualSense "Cosmic White" stock colours
+            RGBColour GetBodyColour()      const override { return RGBColour{0xff, 0xff, 0xff}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0x32, 0x32, 0x32}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0xff, 0xff, 0xff}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0xff, 0xff, 0xff}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:

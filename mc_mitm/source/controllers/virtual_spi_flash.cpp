@@ -114,6 +114,20 @@ namespace ams::controller {
         R_SUCCEED();
     }
 
+    Result VirtualSpiFlash::WriteColours(const RGBColour &body,
+                                         const RGBColour &buttons,
+                                         const RGBColour &left_grip,
+                                         const RGBColour &right_grip) {
+        const struct {
+            RGBColour body;
+            RGBColour buttons;
+            RGBColour left_grip;
+            RGBColour right_grip;
+        } colours = { body, buttons, left_grip, right_grip };
+        R_TRY(fs::WriteFile(m_virtual_memory_file, 0x6050, &colours, sizeof(colours), fs::WriteOption::Flush));
+        R_SUCCEED();
+    }
+
     Result VirtualSpiFlash::EnsureMemoryRegion(int offset, const void *data, size_t size) {
         bool initialized;
         R_TRY(this->CheckMemoryRegion(offset, size, &initialized));

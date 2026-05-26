@@ -140,6 +140,13 @@ namespace ams::controller {
             XboxOneController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
             Result SetVibration(const SwitchMotorData *motor_data);
+
+            // Xbox One "Carbon Black" stock colours
+            RGBColour GetBodyColour()      const override { return RGBColour{0x14, 0x14, 0x14}; }
+            RGBColour GetButtonsColour()   const override { return RGBColour{0xc8, 0xc8, 0xc8}; }
+            RGBColour GetLeftGripColour()  const override { return RGBColour{0x14, 0x14, 0x14}; }
+            RGBColour GetRightGripColour() const override { return RGBColour{0x14, 0x14, 0x14}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:
