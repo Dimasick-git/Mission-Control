@@ -35,8 +35,8 @@ jobs:
       - name: Mark workspace as safe for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Install libjpeg-turbo
-        run: dkp-pacman -S --noconfirm switch-libjpeg-turbo
+      - name: Install libjpeg-turbo (skip if already present)
+        run: dkp-pacman -S --noconfirm --needed switch-libjpeg-turbo
 
       - name: Determine release tag
         id: tag

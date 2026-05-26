@@ -30,10 +30,10 @@ jobs:
       - name: Mark workspace as safe for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Install libjpeg-turbo (libstratosphere dep)
+      - name: Install libjpeg-turbo (libstratosphere dep, skip if already present)
         run: |
           set -e
-          dkp-pacman -S --noconfirm switch-libjpeg-turbo
+          dkp-pacman -S --noconfirm --needed switch-libjpeg-turbo
 
       - name: Show derived version
         run: |
