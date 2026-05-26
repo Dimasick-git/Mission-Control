@@ -1,5 +1,9 @@
 name: Verify build (PR smoke test)
 
+defaults:
+  run:
+    shell: bash
+
 on:
   pull_request:
     paths-ignore:

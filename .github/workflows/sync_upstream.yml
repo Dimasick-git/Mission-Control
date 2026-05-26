@@ -1,5 +1,9 @@
 name: Sync from upstream
 
+defaults:
+  run:
+    shell: bash
+
 on:
   schedule:
     # 03:00 UTC every day
