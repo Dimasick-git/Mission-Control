@@ -1,5 +1,5 @@
 {
-	"name"  : "MissionControl (Ryazhenka)",
+	"name"  : "MissionControl",
 	"tid"   : "010000000000bd00",
 	"requires_reboot": true
 }
