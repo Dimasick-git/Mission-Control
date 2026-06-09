@@ -124,6 +124,9 @@ namespace ams::controller {
 
             GamesirController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
+            RGBColour GetBodyColour()    const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
+            RGBColour GetButtonsColour() const override { return RGBColour{0x90, 0x90, 0x90}; }
+
             void ProcessInputData(const bluetooth::HidReport *report) override;
 
         private:
