@@ -20,15 +20,15 @@ jobs:
 
     steps:
       - name: Checkout fork
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure git identity
         run: |
-          git config user.name  'ryazhenka-sync-bot'
-          git config user.email 'ryazhenka-sync-bot@users.noreply.github.com'
+          git config user.name  'Dimasick-git'
+          git config user.email 'dimaorynchukk@gmail.com'
 
       - name: Add upstream remote & fetch
         run: |
@@ -54,7 +54,7 @@ jobs:
           DATE=$(date -u +%Y-%m-%d)
           BRANCH="sync/upstream-$DATE"
           # Force a fresh branch off main each run
-          git checkout -B "$BRANCH" main
+          git checkout -b "$BRANCH" main
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
       - name: Merge upstream (favour ours for protected paths)
@@ -96,7 +96,7 @@ jobs:
 
       - name: Push sync branch
         if: steps.check.outputs.behind != '0'
-        run: git push --force-with-lease origin "${{ steps.branch.outputs.branch }}"
+        run: git push -u origin "${{ steps.branch.outputs.branch }}"
 
       - name: Open pull request
         if: steps.check.outputs.behind != '0'
