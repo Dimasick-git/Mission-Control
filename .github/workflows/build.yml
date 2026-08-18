@@ -39,11 +39,16 @@ jobs:
           set -e
           dkp-pacman -S --noconfirm --needed switch-libjpeg-turbo
 
-      - name: Show derived version
+      - name: Show application version
         run: |
-          GIT_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo v15.1.1)
-          echo "Building tag: $GIT_TAG"
-          echo "GIT_TAG=$GIT_TAG" >> $GITHUB_ENV
+          set -euo pipefail
+          APP_VERSION=$(sed -nE 's/^[[:space:]]*APP_VERSION[[:space:]]*:=[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' Makefile | head -1)
+          if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::APP_VERSION in Makefile must use MAJOR.MINOR.PATCH format."
+            exit 1
+          fi
+          echo "Building application version: $APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
 
       - name: make dist
         run: make dist -j$(nproc)
@@ -51,7 +56,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: MissionControl-${{ env.GIT_TAG }}-${{ github.run_number }}
+          name: MissionControl-${{ env.APP_VERSION }}-${{ github.run_number }}
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 30

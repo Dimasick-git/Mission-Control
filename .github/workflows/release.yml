@@ -7,19 +7,18 @@ defaults:
 on:
   push:
     branches: [main]
-    tags: ['v*.*.*']
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: mission-control-release-main
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Build & publish release if APP_VERSION changed
+    name: Build and publish one package per application version
     runs-on: ubuntu-latest
     container:
       image: devkitpro/devkita64:latest
@@ -38,101 +37,119 @@ jobs:
       - name: Install libjpeg-turbo (libstratosphere dep)
         run: dkp-pacman -S --noconfirm --needed switch-libjpeg-turbo
 
-      - name: Resolve target tag and check if release exists
-        id: tag
+      - name: Resolve application version and target release
+        id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
-          # Mission-Control uses the GIT_TAG fallback in Makefile as its source of truth
-          APP_VERSION=$(grep -E '^\s*GIT_TAG\s*:=' Makefile | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d 'v')
-          if [ -z "$APP_VERSION" ]; then
-            echo "::error::Could not extract APP_VERSION from Makefile GIT_TAG fallback."
+          set -euo pipefail
+
+          APP_VERSION=$(sed -nE 's/^[[:space:]]*APP_VERSION[[:space:]]*:=[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' Makefile | head -1)
+          if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::APP_VERSION in Makefile must use MAJOR.MINOR.PATCH format."
             exit 1
           fi
 
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-          else
-            TAG="v${APP_VERSION}"
-          fi
-
+          TAG="v${APP_VERSION}"
           if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "Release $TAG already exists — skipping (idempotent)."
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            RELEASE_EXISTS=true
+            echo "Existing release $TAG will be refreshed."
           else
-            echo "Will publish: $TAG"
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            RELEASE_EXISTS=false
+            echo "No release for $TAG exists; a new tag and release will be created."
           fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
 
-      - name: Create & push tag (if not from tag push)
-        if: steps.tag.outputs.should_release == 'true' && !startsWith(github.ref, 'refs/tags/')
+          echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "release_exists=$RELEASE_EXISTS" >> "$GITHUB_OUTPUT"
+
+      - name: Build distribution package
+        run: make dist -j"$(nproc)"
+
+      - name: Locate the package and build release notes
+        id: package
+        run: |
+          set -euo pipefail
+
+          ZIP=$(find dist -maxdepth 1 -type f -name '*.zip' -print -quit)
+          if [[ -z "$ZIP" ]]; then
+            echo "::error::No ZIP package was produced in dist/."
+            exit 1
+          fi
+
+          SHA256=$(sha256sum "$ZIP" | awk '{print $1}')
+          TAG="${{ steps.version.outputs.tag }}"
+          TAG_NO_V="${TAG#v}"
+          CHANGELOG=$(awk -v tag="$TAG_NO_V" '
+            $0 ~ "^## \\[" tag "\\]" { section=1; next }
+            section && /^## \[/ { exit }
+            section { print }
+          ' CHANGELOG.md)
+          if [[ -z "$CHANGELOG" ]]; then
+            CHANGELOG="Автоматическая сборка. Полное описание изменений приведено в CHANGELOG.md."
+          fi
+
+          {
+            echo 'notes<<EOF'
+            echo "$CHANGELOG"
+            echo
+            echo '---'
+            echo
+            echo "**SHA-256:** \`$SHA256\`"
+            echo "**Собрано из коммита:** \`${GITHUB_SHA::7}\`"
+            echo "**Артефакт в релизе:** один ZIP-пакет."
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$ZIP")" >> "$GITHUB_OUTPUT"
+
+      - name: Create a new version tag when needed
+        if: steps.version.outputs.release_exists == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
-          TAG="${{ steps.tag.outputs.tag }}"
-          if ! git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
-            git config user.name  'Dimasick-git'
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            git config user.name 'Dimasick-git'
             git config user.email 'dimaorynchukk@gmail.com'
-            git tag -a "$TAG" -m "Auto-release on APP_VERSION change: $TAG"
+            git tag -a "$TAG" -m "Release $TAG"
             git push origin "$TAG"
           fi
 
-      - name: make dist
-        if: steps.tag.outputs.should_release == 'true'
-        run: make dist -j$(nproc)
-
-      - name: Locate built zip
-        id: zip
-        if: steps.tag.outputs.should_release == 'true'
-        run: |
-          set -e
-          F=$(ls dist/*.zip | head -1)
-          echo "path=$F" >> "$GITHUB_OUTPUT"
-          echo "name=$(basename $F)" >> "$GITHUB_OUTPUT"
-          (cd dist && sha256sum "$(basename $F)" > "$(basename $F).sha256")
-          echo "sha256=$(cut -d' ' -f1 < dist/$(basename $F).sha256)" >> "$GITHUB_OUTPUT"
-
-      - name: Extract changelog section
-        id: changelog
-        if: steps.tag.outputs.should_release == 'true'
-        run: |
-          set -e
-          TAG="${{ steps.tag.outputs.tag }}"
-          TAG_NO_V="${TAG#v}"
-          BODY=$(awk -v tag="$TAG_NO_V" '
-            $0 ~ "^## \[" tag "\]" {flag=1; next}
-            flag && /^## \[/ {flag=0}
-            flag {print}
-          ' CHANGELOG.md)
-          if [ -z "$BODY" ]; then
-            BODY="Auto-built release. See [CHANGELOG.md](CHANGELOG.md) for full history."
-          fi
-          {
-            echo 'body<<DELIM'
-            echo "$BODY"
-            echo ''
-            echo '---'
-            echo ''
-            echo "**SHA-256**: \`${{ steps.zip.outputs.sha256 }}\`"
-            echo "**Built from**: \`${GITHUB_SHA::7}\`"
-            echo 'DELIM'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Publish GitHub Release
-        if: steps.tag.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: Mission-Control ${{ steps.tag.outputs.tag }}
-          body: ${{ steps.changelog.outputs.body }}
-          files: |
-            ${{ steps.zip.outputs.path }}
-            dist/${{ steps.zip.outputs.name }}.sha256
-          draft: false
-          prerelease: false
+      - name: Create a new release for a new application version
+        if: steps.version.outputs.release_exists == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.version.outputs.tag }}" "${{ steps.package.outputs.zip }}" \
+            --repo "${{ github.repository }}" \
+            --title "Mission-Control ${{ steps.version.outputs.tag }}" \
+            --notes "${{ steps.package.outputs.notes }}"
+
+      - name: Replace the package in the existing release
+        if: steps.version.outputs.release_exists == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          NEW_ASSET="${{ steps.package.outputs.name }}"
+
+          # Upload first: a failed upload must never leave an existing release empty.
+          gh release upload "$TAG" "${{ steps.package.outputs.zip }}" \
+            --repo "${{ github.repository }}" --clobber
+
+          # Then delete every older asset, including obsolete ZIPs and checksum files.
+          gh release view "$TAG" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' \
+            | while IFS= read -r asset; do
+                [[ -z "$asset" || "$asset" == "$NEW_ASSET" ]] && continue
+                gh release delete-asset "$TAG" "$asset" --repo "${{ github.repository }}" --yes
+              done
+
+          gh release edit "$TAG" \
+            --repo "${{ github.repository }}" \
+            --title "Mission-Control $TAG" \
+            --notes "${{ steps.package.outputs.notes }}"
