@@ -87,6 +87,9 @@ jobs:
             exit 1
           fi
 
+          mkdir -p release
+          cp "$ZIP" release/MissionControl.zip
+          ZIP=release/MissionControl.zip
           SHA256=$(sha256sum "$ZIP" | awk '{print $1}')
           TAG="${{ steps.version.outputs.tag }}"
           TAG_NO_V="${TAG#v}"
