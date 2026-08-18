@@ -39,8 +39,6 @@ jobs:
 
       - name: Resolve application version and target release
         id: version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -50,18 +48,30 @@ jobs:
             exit 1
           fi
 
-          TAG="v${APP_VERSION}"
-          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            RELEASE_EXISTS=true
-            echo "Existing release $TAG will be refreshed."
-          else
-            RELEASE_EXISTS=false
-            echo "No release for $TAG exists; a new tag and release will be created."
-          fi
-
           echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "release_exists=$RELEASE_EXISTS" >> "$GITHUB_OUTPUT"
+          echo "tag=v$APP_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether the version release already exists
+        id: release_lookup
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: process.env.RELEASE_TAG,
+              });
+              core.setOutput('exists', 'true');
+              core.info(`Existing release ${process.env.RELEASE_TAG} will be refreshed.`);
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.setOutput('exists', 'false');
+              core.info(`No release for ${process.env.RELEASE_TAG}; a new tag and release will be created.`);
+            }
 
       - name: Build distribution package
         run: make dist -j"$(nproc)"
@@ -89,8 +99,8 @@ jobs:
             CHANGELOG="Автоматическая сборка. Полное описание изменений приведено в CHANGELOG.md."
           fi
 
+          NOTES_FILE=release-notes.md
           {
-            echo 'notes<<EOF'
             echo "$CHANGELOG"
             echo
             echo '---'
@@ -98,15 +108,13 @@ jobs:
             echo "**SHA-256:** \`$SHA256\`"
             echo "**Собрано из коммита:** \`${GITHUB_SHA::7}\`"
             echo "**Артефакт в релизе:** один ZIP-пакет."
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          } > "$NOTES_FILE"
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$ZIP")" >> "$GITHUB_OUTPUT"
+          echo "notes_path=$NOTES_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Create a new version tag when needed
-        if: steps.version.outputs.release_exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.release_lookup.outputs.exists == 'false'
         run: |
           set -euo pipefail
           TAG="${{ steps.version.outputs.tag }}"
@@ -118,38 +126,51 @@ jobs:
             git push origin "$TAG"
           fi
 
-      - name: Create a new release for a new application version
-        if: steps.version.outputs.release_exists == 'false'
+      - name: Create or refresh the release package
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Mission-Control ${{ steps.version.outputs.tag }}
+          body_path: ${{ steps.package.outputs.notes_path }}
+          files: ${{ steps.package.outputs.zip }}
+          draft: false
+          prerelease: false
+          overwrite_files: true
+          fail_on_unmatched_files: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          gh release create "${{ steps.version.outputs.tag }}" "${{ steps.package.outputs.zip }}" \
-            --repo "${{ github.repository }}" \
-            --title "Mission-Control ${{ steps.version.outputs.tag }}" \
-            --notes "${{ steps.package.outputs.notes }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Replace the package in the existing release
-        if: steps.version.outputs.release_exists == 'true'
+      - name: Keep only the current ZIP package in the release
+        uses: actions/github-script@v8
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
-          NEW_ASSET="${{ steps.package.outputs.name }}"
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          KEEP_ASSET: ${{ steps.package.outputs.name }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: process.env.RELEASE_TAG,
+            });
 
-          # Upload first: a failed upload must never leave an existing release empty.
-          gh release upload "$TAG" "${{ steps.package.outputs.zip }}" \
-            --repo "${{ github.repository }}" --clobber
+            const staleAssets = release.data.assets.filter(
+              (asset) => asset.name !== process.env.KEEP_ASSET,
+            );
+            for (const asset of staleAssets) {
+              await github.rest.repos.deleteReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                asset_id: asset.id,
+              });
+              core.info(`Deleted stale release asset: ${asset.name}`);
+            }
 
-          # Then delete every older asset, including obsolete ZIPs and checksum files.
-          gh release view "$TAG" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' \
-            | while IFS= read -r asset; do
-                [[ -z "$asset" || "$asset" == "$NEW_ASSET" ]] && continue
-                gh release delete-asset "$TAG" "$asset" --repo "${{ github.repository }}" --yes
-              done
-
-          gh release edit "$TAG" \
-            --repo "${{ github.repository }}" \
-            --title "Mission-Control $TAG" \
-            --notes "${{ steps.package.outputs.notes }}"
+            const remaining = await github.rest.repos.listReleaseAssets({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+            });
+            if (remaining.data.length !== 1 || remaining.data[0].name !== process.env.KEEP_ASSET) {
+              throw new Error('Release must contain exactly one current ZIP package after cleanup.');
+            }
