@@ -33,7 +33,7 @@
 
 ## Установка
 
-1. Скачайте свежий релиз: [Releases →](https://github.com/Dimasick-git/Mission-Control/releases/latest), файл `MissionControl-15.1.2-main-<hash>.zip`.
+1. Скачайте свежий релиз: [Releases →](https://github.com/Dimasick-git/Mission-Control/releases/latest), файл `MissionControl.zip` (релиз `v15.1.2`).
 2. Распакуйте содержимое в корень SD-карты, разрешая объединение папок и перезапись существующих файлов.
 3. Перезагрузите консоль. Модуль `mc.mitm` (TID `010000000000bd00`) подцепится Atmosphère при загрузке.
 
