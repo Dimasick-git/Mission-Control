@@ -6,7 +6,7 @@ GIT_HASH := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 
 # Единственный источник версии приложения и релиза.
 # Увеличьте APP_VERSION только для создания нового тега и нового релиза.
-APP_VERSION := 15.1.1
+APP_VERSION := 15.1.2
 GIT_TAG := v$(APP_VERSION)
 
 VERSION := $(shell printf "0x%02X%02X%02X" $(shell echo "$(APP_VERSION)" | sed -E 's/^([0-9]+).([0-9]+).([0-9]+).*/\1 \2 \3/g'))

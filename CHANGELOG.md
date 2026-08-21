@@ -3,7 +3,25 @@
 Все заметные изменения форка относительно [ndeadly/MissionControl](https://github.com/ndeadly/MissionControl)
 документируются здесь. Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
 Версионирование — SemVer-подобное, увязанное с upstream номером (upstream
-`v0.15.1` → у нас `v15.1.1`).
+`v0.15.2` → у нас `v15.1.2`).
+
+## [15.1.2] — 2026-08-21
+
+Патч-релиз на базе актуального upstream `v0.15.2`.
+
+### Добавлено
+
+- **Поддержка HOS 22.5.0.** Включены upstream-изменения для HOS 22.5.0, в том числе актуальный патч `hid` и обновлённые ревизии `Atmosphere-libs` и `libnx`.
+
+### Сохранено
+
+- **Фикс цветов Ряженки не изменён.** Удаление русскоязычной подмены SPI 0x6050 и индивидуальные цвета эмулируемых контроллеров сохранены без регрессий.
+
+### Базовая совместимость
+
+- Atmosphère ≥ 1.11.2.
+- HOS до 22.5.0 включительно.
+- Совместимо с [Dimasick-git/Atmosphere](https://github.com/Dimasick-git/Atmosphere).
 
 ## [15.1.1] — 2026-05-26
 
@@ -57,4 +75,5 @@
 - HOS до 22.1.0 включительно.
 - Совместимо с [Dimasick-git/Atmosphere](https://github.com/Dimasick-git/Atmosphere).
 
+[15.1.2]: https://github.com/Dimasick-git/Mission-Control/releases/tag/v15.1.2
 [15.1.1]: https://github.com/Dimasick-git/Mission-Control/releases/tag/v15.1.1

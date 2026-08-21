@@ -23,8 +23,8 @@
 |------|-----------|-------|
 | **Удалена подмена цветов 0x6050 на жёлто-синий для русского языка** | `mc_mitm/source/controllers/switch_controller.cpp` и `emulated_switch_controller.cpp` | В ванильном модуле при `GetSystemLanguage() == 10` (русский) каждый SPI-read контроллера по адресу 0x6050 переписывался байтами `{0xff,0xd7,0x00, 0x00,0x57,0xb7, ...}` = `#FFD700 / #0057B7`. Это касалось **всех** контроллеров, в том числе настоящих Joy-Cons и Pro Controller — у русскоязычных пользователей они отображались в системе с жёлтым корпусом и синими кнопками вместо реальных заводских цветов. Блоки удалены целиком. |
 | **Заводские цвета корпуса/кнопок для каждого эмулированного контроллера** | `mc_mitm/source/controllers/*.hpp` (10 классов) + `virtual_spi_flash.cpp::WriteColours()` | В ванильном модуле все эмулированные контроллеры репортят серые цвета `{0x32,0x32,0x32}`. Теперь DualSense приходит белым, DualShock 4 — чёрным, Xbox One — карбоновым и т.д. Подробнее: [`docs/RU/controllers.md`](docs/RU/controllers.md). |
-| **Версия 15.1.1** (вместо 0.15.1) | `Makefile` | Поднята согласно нашей внутренней нумерации Ряженки. Совместима с тем же ams >=1.11.1 / HOS до 22.1.0, что и upstream. |
-| **Makefile fallback на `v15.1.1`** | `Makefile:6` | CI shallow-checkout без тегов больше не падает с `unknown` версией. |
+| **Версия 15.1.2** (вместо 0.15.2) | `Makefile` | Патч-релиз с актуальной базой upstream. Совместима с Atmosphère ≥ 1.11.2 / HOS до 22.5.0, как и upstream. |
+| **Makefile fallback на `v15.1.2`** | `Makefile:6` | CI shallow-checkout без тегов больше не падает с `unknown` версией. |
 | **CI/CD набор** | `.github/workflows/{build,release,sync_upstream,verify_build}.yml` | Ежедневный sync с ndeadly/MissionControl (PR, не прямой merge), автосборка через `devkitpro/devkita64` Docker, авто-релиз при пуше тега или изменении Makefile. |
 | **Локальный сборщик** | `scripts/build.ps1` | Windows-friendly обёртка над Docker-сборкой без необходимости ставить devkitPro/msys2 на хост. |
 | **Брендинг toolbox.json** | `mc_mitm/toolbox.json` | `MissionControl (Ryazhenka)` в Tinfoil/DBI/oversight tools, чтобы отличать от ванильного. TID и путь `/config/MissionControl/` **не трогаются** — обратная совместимость с пользовательскими `missioncontrol.ini` сохранена. |
@@ -33,11 +33,11 @@
 
 ## Установка
 
-1. Скачайте свежий релиз: [Releases →](https://github.com/Dimasick-git/Mission-Control/releases/latest), файл `MissionControl-15.1.1-main-<hash>.zip`.
+1. Скачайте свежий релиз: [Releases →](https://github.com/Dimasick-git/Mission-Control/releases/latest), файл `MissionControl-15.1.2-main-<hash>.zip`.
 2. Распакуйте содержимое в корень SD-карты, разрешая объединение папок и перезапись существующих файлов.
 3. Перезагрузите консоль. Модуль `mc.mitm` (TID `010000000000bd00`) подцепится Atmosphère при загрузке.
 
-**Требования**: Atmosphère ≥ 1.11.1 на HOS 22.1.0 (или соответствующая связка на более старых прошивках). На системах со старым Atmosphère модуль может крашить bluetooth — обновитесь.
+**Требования**: Atmosphère ≥ 1.11.2 на HOS 22.5.0 (или соответствующая связка на более старых прошивках). На системах со старым Atmosphère модуль может крашить Bluetooth — обновитесь.
 
 ## Использование
 
