@@ -16,7 +16,7 @@ jobs:
       - name: Build with pinned libnx
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
-            -e HOME=/tmp devkitpro/devkita64:latest bash -lc '
+            devkitpro/devkita64:latest bash -lc '
               set -euo pipefail
               dkp-pacman -Syu --noconfirm
               git config --global --add safe.directory "*"
