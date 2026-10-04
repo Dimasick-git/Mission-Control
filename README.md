@@ -12,21 +12,21 @@
 
 # Mission Control
 
-## Mission-Control 0.16.1 вЂ” Р СЏР¶РµРЅРєР°
+## Mission-Control 0.16.1 — Ряженка
 
-Р­С‚РѕС‚ С„РѕСЂРє РѕСЃРЅРѕРІР°РЅ РЅР° MissionControl 0.16.0, upstream-РєРѕРјРјРёС‚
-`71bbe2d4e97d618775b5a3e2f91bfeaf52d8b75e`, СЃ РїРѕРґРґРµСЂР¶РєРѕР№ HOS 23.0.0.
-РЈРґР°Р»РµРЅР° РїРѕРґРјРµРЅР° Р·Р°РІРѕРґСЃРєРёС… С†РІРµС‚РѕРІ Joy-Con Рё Switch Pro Controller РїСЂРё СЂСѓСЃСЃРєРѕРј
-СЏР·С‹РєРµ СЃРёСЃС‚РµРјС‹: РѕС‚РІРµС‚С‹ РєРѕРЅС‚СЂРѕР»Р»РµСЂРѕРІ РїРµСЂРµРґР°СЋС‚СЃСЏ СЃ РёСЃС…РѕРґРЅС‹РјРё С†РІРµС‚РѕРІС‹РјРё РґР°РЅРЅС‹РјРё.
-РџРѕРґРґРµСЂР¶РєР° СЃС‚РѕСЂРѕРЅРЅРёС… Bluetooth-РєРѕРЅС‚СЂРѕР»Р»РµСЂРѕРІ СЃРѕС…СЂР°РЅРµРЅР°.
+Этот форк основан на MissionControl 0.16.0, upstream-коммит
+`71bbe2d4e97d618775b5a3e2f91bfeaf52d8b75e`, с поддержкой HOS 23.0.0.
+Удалена подмена заводских цветов Joy-Con и Switch Pro Controller при русском
+языке системы: ответы контроллеров передаются с исходными цветовыми данными.
+Поддержка сторонних Bluetooth-контроллеров сохранена.
 
-РЎРєР°С‡Р°С‚СЊ: [СЂРµР»РёР· 0.16.1](https://github.com/Dimasick-git/Mission-Control/releases/tag/v0.16.1).
-Р Р°СЃРїР°РєСѓР№С‚Рµ `MissionControl-0.16.1.zip` РІ РєРѕСЂРµРЅСЊ SD-РєР°СЂС‚С‹ Рё РїРѕР»РЅРѕСЃС‚СЊСЋ РїРµСЂРµР·Р°РіСЂСѓР·РёС‚Рµ
-Switch. РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РїРµСЂРµРїРѕРґРєР»СЋС‡РёС‚Рµ Joy-Con, С‡С‚РѕР±С‹ РѕР±РЅРѕРІРёС‚СЊ С†РІРµС‚Р° РІ РјРµРЅСЋ.
-РќР° HOS 23.0.0 С‚СЂРµР±СѓРµС‚СЃСЏ AtmosphГЁre 1.12.0 РёР»Рё РЅРѕРІРµРµ.
+Скачать: [релиз 0.16.1](https://github.com/Dimasick-git/Mission-Control/releases/tag/v0.16.1).
+Распакуйте `MissionControl-0.16.1.zip` в корень SD-карты и полностью перезагрузите
+Switch. При необходимости переподключите Joy-Con, чтобы обновить цвета в меню.
+На HOS 23.0.0 требуется Atmosphère 1.12.0 или новее.
 
-РџРѕРґСЂРѕР±РЅРѕСЃС‚Рё РёСЃРїСЂР°РІР»РµРЅРёСЏ Рё СЃР±РѕСЂРєРё: [Р·Р°РјРµС‚РєРё 0.16.1](docs/0.16.1.md).
-Р’РµСЂСЃРёСЏ Р·Р°РґР°С‘С‚СЃСЏ СЏРІРЅРѕ РІ `Makefile`, РЅРµР·Р°РІРёСЃРёРјРѕ РѕС‚ СЃС‚Р°СЂС‹С… С‚РµРіРѕРІ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ.
+Подробности исправления и сборки: [заметки 0.16.1](docs/0.16.1.md).
+Версия задаётся явно в `Makefile`, независимо от старых тегов репозитория.
 
 
 Use controllers from other consoles natively on your Nintendo Switch via Bluetooth. No dongles or other external hardware neccessary.
@@ -100,7 +100,7 @@ Use controllers from other consoles natively on your Nintendo Switch via Bluetoo
 
 ### Requirements
 
-* Hackable Nintendo Switch running an up-to-date version of [AtmosphГЁre](https://github.com/Atmosphere-NX/Atmosphere/releases) custom firmware. Other custom firmwares are ***not supported***.
+* Hackable Nintendo Switch running an up-to-date version of [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere/releases) custom firmware. Other custom firmwares are ***not supported***.
 * Compatible Bluetooth controller
 
 ### Installation
@@ -108,11 +108,11 @@ Use controllers from other consoles natively on your Nintendo Switch via Bluetoo
 Download the [latest release](https://github.com/ndeadly/MissionControl/releases) .zip and extract to the root of your SD card, allowing the folders to merge and overwriting any existing files. Reboot your console to activate the module and you're done!
 
 ***IMPORTANT:
-AtmosphГЁre >= 1.12.0 is required to run the latest release of Mission Control on firmware 23.0.0+. Using an older AtmosphГЁre version will cause Mission Control to crash or freeze the system on boot.***
+Atmosphère >= 1.12.0 is required to run the latest release of Mission Control on firmware 23.0.0+. Using an older Atmosphère version will cause Mission Control to crash or freeze the system on boot.***
 
 ### Usage
 
-Mission Control is primarily a sysmodule (background process) that gets loaded by AtmosphГЁre at boot time and runs indefinitely alongside the rest of the operating system. It enables the use of unsupported Bluetooth controllers as if they were native Pro Controllers. This means that you can pair and configure new controllers via Nintendo's own system menus, without the need to load additional homebrew applications. There is (currently) no Mission Control "app" to be opened.
+Mission Control is primarily a sysmodule (background process) that gets loaded by Atmosphère at boot time and runs indefinitely alongside the rest of the operating system. It enables the use of unsupported Bluetooth controllers as if they were native Pro Controllers. This means that you can pair and configure new controllers via Nintendo's own system menus, without the need to load additional homebrew applications. There is (currently) no Mission Control "app" to be opened.
 
 Controllers must first be paired with the console (see below) before they can be used. Once paired, controllers will seek out and reconnect to the console automatically when woken up. There is no need to re-pair them every time. Note that unofficial controllers cannot be used to wake the console.
 
@@ -237,7 +237,7 @@ Below is a list of features I am currently working on or would like to look into
 ### Frequently Asked Questions
 
 ***Does this run on \<insert CFW here\>?***
-No. Mission Control will only run under AtmosphГЁre. This is not some attempt to lock out users of other CFW, Atmosphere is simply the only one providing the extensions neccessary to MITM Bluetooth communications that make this sysmodule possible.
+No. Mission Control will only run under Atmosphère. This is not some attempt to lock out users of other CFW, Atmosphere is simply the only one providing the extensions neccessary to MITM Bluetooth communications that make this sysmodule possible.
 
 ***Will using this get me banned from online?***
 Currently there haven't been any confirmed cases of bans as a result of running Mission Control. That said, running any unofficial software under CFW will always carry a non-zero risk of ban, and Nintendo could change their ban criteria at any point. While Mission Control should be relatively safe, as it simply emulates a Pro Controller being connected, it would certainly be possible to detect that you had connected unofficial controllers to the console if Nintendo were interested in doing so. Use at your own discretion.
@@ -346,7 +346,7 @@ make dist
 
 * [__switchbrew__](https://switchbrew.org/wiki/Main_Page) for the extensive documention of the Switch OS.
 * [__devkitPro__](https://devkitpro.org/) for the homebrew compiler toolchain.
-* __SciresM__ for his dedicated work on the [AtmosphГЁre](https://github.com/Atmosphere-NX) project, libstratosphere and general helpfulness with all things Switch related.
+* __SciresM__ for his dedicated work on the [Atmosphère](https://github.com/Atmosphere-NX) project, libstratosphere and general helpfulness with all things Switch related.
 * __misson20000__ for his handy debug monitor [Twili](https://github.com/misson20000/twili) and IPC logger [Ilia](https://github.com/misson20000/ilia)
 * __dekuNukem__, __CTCaer__, __shinyquagsire23__ and others for their work in reversing and documenting the switch controller communication protocol.
 * __Banz99__ for ongoing code contributions, discussing ideas, testing and generally keeping me on my toes.

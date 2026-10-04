@@ -18,6 +18,7 @@ jobs:
           docker run --rm -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
             -e HOME=/tmp devkitpro/devkita64:latest bash -lc '
               set -euo pipefail
+              dkp-pacman -Syu --noconfirm
               git config --global --add safe.directory "*"
               make -C lib/libnx -j"$(nproc)"
               make -C lib/libnx install
