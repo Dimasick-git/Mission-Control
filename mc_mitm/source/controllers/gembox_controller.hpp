@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum GemboxDPadDirection {
-        GemboxDPad_N,
-        GemboxDPad_NE,
-        GemboxDPad_E,
-        GemboxDPad_SE,
-        GemboxDPad_S,
-        GemboxDPad_SW,
-        GemboxDPad_W,
-        GemboxDPad_NW,
-        GemboxDPad_Released = 0x0f
-    };
-
     struct GemboxButtonData {
         u8 A     : 1;
         u8 B     : 1;
@@ -61,7 +49,7 @@ namespace ams::controller {
     } PACKED;
 
     struct GemboxInputReport0x07 {
-        u8 dpad;
+        DirectionalPadType<0, 0xF> dpad;
         AnalogStick<s8> left_stick;
         AnalogStick<s8> right_stick;
         u8 left_trigger;
@@ -86,7 +74,7 @@ namespace ams::controller {
 
             GemboxController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x02(const GemboxReportData *src);

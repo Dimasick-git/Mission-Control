@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum AmazonDPadDirection {
-        AmazonDPad_Released,
-        AmazonDPad_N,
-        AmazonDPad_NE,
-        AmazonDPad_E,
-        AmazonDPad_SE,
-        AmazonDPad_S,
-        AmazonDPad_SW,
-        AmazonDPad_W,
-        AmazonDPad_NW
-    };
-
     struct AmazonButtonData {
         u8 A      : 1;
         u8 B      : 1;
@@ -48,8 +36,6 @@ namespace ams::controller {
         u8 L3     : 1;
         u8 R3     : 1;
         u8        : 0;
-
-        u8 dpad;
     } PACKED;
 
     struct AmazonInputReport0x01 {
@@ -58,6 +44,7 @@ namespace ams::controller {
         u8 left_trigger;
         u8 right_trigger;
         AmazonButtonData buttons;
+        DirectionalPadType<1, 0> dpad;
         u8 battery;
     } PACKED;
 
@@ -86,7 +73,7 @@ namespace ams::controller {
 
             AmazonController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const AmazonReportData *src);

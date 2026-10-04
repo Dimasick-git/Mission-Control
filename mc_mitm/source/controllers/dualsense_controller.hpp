@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum DualsenseDPadDirection {
-        DualsenseDPad_N,
-        DualsenseDPad_NE,
-        DualsenseDPad_E,
-        DualsenseDPad_SE,
-        DualsenseDPad_S,
-        DualsenseDPad_SW,
-        DualsenseDPad_W,
-        DualsenseDPad_NW,
-        DualsenseDPad_Released
-    };
-
     struct DualsenseButtonData {
         u8 dpad     : 4;
         u8 square   : 1;
@@ -128,7 +116,7 @@ namespace ams::controller {
         u8 right_trigger;
         u8 counter;
         DualsenseButtonData buttons;
-        u8 _unk1[4];
+        u32 _unk1;
         s16 vel_x;
         s16 vel_y;
         s16 vel_z;
@@ -136,14 +124,14 @@ namespace ams::controller {
         s16 acc_y;
         s16 acc_z;
         s32 timestamp;
-        u8 _unk2;
+        u8 temperature;
         DualsenseTouchpadPoint touch_points[2];
         u8 _unk3[12];
 
-        u8 battery_level : 4;
-        u8 usb           : 1;
-        u8 full          : 1;
-        u8               : 0;
+        u8 battery_level   : 4;
+        u8 powered         : 1;
+        u8 charge_complete : 1;
+        u8                 : 0;
     } PACKED;
 
     struct DualsenseReportData {
@@ -171,33 +159,30 @@ namespace ams::controller {
             , m_lightbar_brightness(0)
             , m_rumble_state({0, 0}) { }
 
-            Result Initialize();
-            Result SetVibration(const SwitchMotorData *motor_data);
-            Result CancelVibration();
-            Result SetPlayerLed(u8 led_mask);
+            virtual Result Initialize() override;
+            virtual Result SetVibration(const SwitchMotorData *motor_data) override;
+            virtual Result CancelVibration() override;
+            virtual Result SetPlayerLed(SwitchPlayerNumber player_number) override;
             Result SetLightbarColour(RGBColour colour);
 
-            // DualSense "Cosmic White" stock colours
-            RGBColour GetBodyColour()      const override { return RGBColour{0xff, 0xff, 0xff}; }
-            RGBColour GetButtonsColour()   const override { return RGBColour{0x32, 0x32, 0x32}; }
-            RGBColour GetLeftGripColour()  const override { return RGBColour{0xff, 0xff, 0xff}; }
-            RGBColour GetRightGripColour() const override { return RGBColour{0xff, 0xff, 0xff}; }
-
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const DualsenseReportData *src);
             void MapInputReport0x31(const DualsenseReportData *src);
 
-            void MapButtons(const DualsenseButtonData *buttons);
-
             Result GetVersionInfo(DualsenseVersionInfo *version_info);
             Result GetCalibrationData(DualsenseImuCalibrationData *calibration);
             Result PushRumbleLedState();
 
+            u8 m_feature_flags0;
+            u8 m_feature_flags1;
             u8 m_led_flags;
             RGBColour m_lightbar_colour;
             u8 m_lightbar_brightness;
+            u8 m_rumble_intensity;
+            u8 m_adaptive_trigger_travel;
+
             DualsenseRumbleData m_rumble_state;
 
             DualsenseVersionInfo m_version_info;

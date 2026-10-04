@@ -66,8 +66,8 @@ namespace ams::controller {
         u8 pressure_cross;
         u8 pressure_square;
         u8 unk4[3];
-        u8 charge;
-        u8 battery;
+        u8 charge_status;
+        u8 battery_level;
         u8 connection;
         u8 unk5[9];
         u16 accel_x;
@@ -104,18 +104,12 @@ namespace ams::controller {
         public:
             Dualshock3Controller(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            Result Initialize(void);
-            Result SetVibration(const SwitchMotorData *motor_data);
-            Result CancelVibration();
-            Result SetPlayerLed(u8 led_mask);
+            virtual Result Initialize(void) override;
+            virtual Result SetVibration(const SwitchMotorData *motor_data) override;
+            virtual Result CancelVibration() override;
+            virtual Result SetPlayerLed(SwitchPlayerNumber player_number) override;
 
-            // DualShock 3 charcoal black with silver buttons
-            RGBColour GetBodyColour()      const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
-            RGBColour GetButtonsColour()   const override { return RGBColour{0xb0, 0xb0, 0xb0}; }
-            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
-            RGBColour GetRightGripColour() const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
-
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const Dualshock3ReportData *src);

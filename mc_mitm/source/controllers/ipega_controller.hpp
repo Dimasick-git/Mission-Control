@@ -31,8 +31,6 @@ namespace ams::controller {
     };
 
     struct IpegaButtonData {
-        u8 dpad;
-
         u8 A            : 1;
         u8 B            : 1;
         u8 L3_g910      : 1;
@@ -60,6 +58,7 @@ namespace ams::controller {
     struct IpegaInputReport0x07 {
         AnalogStick<u8> left_stick;
         AnalogStick<u8> right_stick;
+        DirectionalPadType<0, 0x88> dpad;
         IpegaButtonData buttons;
         u8 right_trigger;
         u8 left_trigger;
@@ -84,7 +83,7 @@ namespace ams::controller {
 
             IpegaController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x02(const IpegaReportData *src);

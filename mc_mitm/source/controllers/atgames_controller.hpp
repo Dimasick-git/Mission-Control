@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum AtGamesDPadDirection {
-        AtGamesDPad_N,
-        AtGamesDPad_NE,
-        AtGamesDPad_E,
-        AtGamesDPad_SE,
-        AtGamesDPad_S,
-        AtGamesDPad_SW,
-        AtGamesDPad_W,
-        AtGamesDPad_NW,
-        AtGamesDPad_Released = 0x08
-    };
-
     struct AtGamesInputReport0x01 {
         u8 rewind        : 1;
         u8 nudge_front   : 1;
@@ -49,7 +37,7 @@ namespace ams::controller {
         u8               : 0;
 
         u8 unk1[2];
-        u8 dpad;
+        DirectionalPadType<0, 8> dpad;
         AnalogStick<u8> left_stick;
         AnalogStick<u8> right_stick; // Only right stick y-axis is used for plunger
         u8 unk2;
@@ -72,7 +60,7 @@ namespace ams::controller {
 
             AtGamesController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id), m_arcadepanel(false) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const AtGamesReportData *src);

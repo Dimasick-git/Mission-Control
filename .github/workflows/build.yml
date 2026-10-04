@@ -1,62 +1,37 @@
-name: Build
-
-defaults:
-  run:
-    shell: bash
+name: Build Mission-Control
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'CONTRIBUTING.md'
-      - 'docs/**'
-      - '.github/sync-protected-paths.txt'
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: Build mc_mitm sysmodule
     runs-on: ubuntu-latest
-    container:
-      image: devkitpro/devkita64:latest
-
     steps:
-      - name: Checkout (with submodules and tags)
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
-
-      - name: Mark workspace as safe for git
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Install libjpeg-turbo (libstratosphere dep, skip if already present)
+      - name: Build with pinned libnx
         run: |
-          set -e
-          dkp-pacman -S --noconfirm --needed switch-libjpeg-turbo
-
-      - name: Show application version
+          docker run --rm -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            -e HOME=/tmp devkitpro/devkita64:latest bash -lc '
+              set -euo pipefail
+              git config --global --add safe.directory "*"
+              make -C lib/libnx -j"$(nproc)"
+              make -C lib/libnx install
+              make dist -j"$(nproc)"
+            '
+      - name: Verify package
         run: |
-          set -euo pipefail
-          APP_VERSION=$(sed -nE 's/^[[:space:]]*APP_VERSION[[:space:]]*:=[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' Makefile | head -1)
-          if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::APP_VERSION in Makefile must use MAJOR.MINOR.PATCH format."
-            exit 1
-          fi
-          echo "Building application version: $APP_VERSION"
-          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
-
-      - name: make dist
-        run: make dist -j$(nproc)
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+          python3 scripts/verify-package.py dist/MissionControl-0.16.1.zip
+          cd dist
+          sha256sum MissionControl-0.16.1.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
         with:
-          name: MissionControl-${{ env.APP_VERSION }}-${{ github.run_number }}
-          path: dist/*.zip
+          name: MissionControl-0.16.1
+          path: |
+            dist/MissionControl-0.16.1.zip
+            dist/SHA256SUMS.txt
           if-no-files-found: error
-          retention-days: 30

@@ -1,23 +1,20 @@
 PROJECT_NAME := MissionControl
 MC_MITM_TID := 010000000000bd00
+MC_VERSION := 0.16.1
 
-GIT_BRANCH := $(shell git symbolic-ref --short HEAD 2>/dev/null | sed s/[^a-zA-Z0-9_-]/_/g)
-GIT_HASH := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+GIT_BRANCH := $(shell git symbolic-ref --short HEAD | sed s/[^a-zA-Z0-9_-]/_/g)
+GIT_HASH := $(shell git rev-parse --short HEAD)
+GIT_TAG := v$(MC_VERSION)
 
-# Единственный источник версии приложения и релиза.
-# Увеличьте APP_VERSION только для создания нового тега и нового релиза.
-APP_VERSION := 15.1.2
-GIT_TAG := v$(APP_VERSION)
-
-VERSION := $(shell printf "0x%02X%02X%02X" $(shell echo "$(APP_VERSION)" | sed -E 's/^([0-9]+).([0-9]+).([0-9]+).*/\1 \2 \3/g'))
-BUILD_VERSION := $(APP_VERSION)-$(GIT_BRANCH)-$(GIT_HASH)
+VERSION := $(shell printf "0x%02X%02X%02X" $(shell echo "$(GIT_TAG)" | sed -E 's/^v([0-9]+).([0-9]+).([0-9]+)/\1 \2 \3/g'))
+BUILD_VERSION := $(GIT_TAG:v%=%)-$(GIT_BRANCH)-$(GIT_HASH)
 BUILD_DATE := $(shell date)
 
 TARGETS := mcmitm_version.cpp mc_mitm
 
 all: $(TARGETS)
 
-mcmitm_version.cpp: .git/HEAD .git/index
+mcmitm_version.cpp: Makefile .git/HEAD .git/index
 	echo "namespace ams::mc { unsigned int mc_version = $(VERSION); const char *mc_build_name = \"$(BUILD_VERSION)\"; const char *mc_build_date = \"$(BUILD_DATE)\"; }" > mc_mitm/source/$@
 
 mc_mitm:
@@ -49,6 +46,6 @@ dist: all
 	mkdir -p dist/config/MissionControl/controllers
 	cp mc_mitm/config.ini dist/config/MissionControl/missioncontrol.ini.template
 
-	cd dist; zip -r $(PROJECT_NAME)-$(BUILD_VERSION).zip ./*; cd ../;
+	cd dist; zip -r $(PROJECT_NAME)-$(MC_VERSION).zip ./*; cd ../;
 
 .PHONY: all clean dist $(TARGETS)

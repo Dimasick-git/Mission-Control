@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum AtariDPadDirection {
-        AtariDPad_Released,
-        AtariDPad_N,
-        AtariDPad_NE,
-        AtariDPad_E,
-        AtariDPad_SE,
-        AtariDPad_S,
-        AtariDPad_SW,
-        AtariDPad_W,
-        AtariDPad_NW,
-    };
-
     struct AtariButtonData {
         u8 A    : 1;
         u8 B    : 1;
@@ -76,7 +64,7 @@ namespace ams::controller {
 
             AtariController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const AtariReportData *src);

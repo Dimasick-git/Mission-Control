@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum NvidiaShieldDPadDirection {
-        NvidiaShieldDPad_N,
-        NvidiaShieldDPad_NE,
-        NvidiaShieldDPad_E,
-        NvidiaShieldDPad_SE,
-        NvidiaShieldDPad_S,
-        NvidiaShieldDPad_SW,
-        NvidiaShieldDPad_W,
-        NvidiaShieldDPad_NW,
-        NvidiaShieldDPad_Released = 0x80
-    };
-
     struct NvidiaShieldButtonData {
         u8 A     : 1;
         u8 B     : 1;
@@ -46,7 +34,7 @@ namespace ams::controller {
 
     struct NvidiaShieldInputReport0x01 {
         u8 _unk0;  // maybe a counter?
-        u8 dpad;
+        DirectionalPadType<0, 0x80> dpad;
         NvidiaShieldButtonData buttons;
         u16 left_trigger;
         u16 right_trigger;
@@ -78,13 +66,7 @@ namespace ams::controller {
 
             NvidiaShieldController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            // NVIDIA Shield matte black with green accents
-            RGBColour GetBodyColour()      const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
-            RGBColour GetButtonsColour()   const override { return RGBColour{0x76, 0xb9, 0x00}; }
-            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
-            RGBColour GetRightGripColour() const override { return RGBColour{0x1c, 0x1c, 0x1c}; }
-
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const NvidiaShieldReportData *src);

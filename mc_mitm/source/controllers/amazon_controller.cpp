@@ -14,7 +14,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "amazon_controller.hpp"
-#include "controller_utils.hpp"
 #include <stratosphere.hpp>
 
 namespace ams::controller {
@@ -25,59 +24,59 @@ namespace ams::controller {
 
     }
 
-    void AmazonController::ProcessInputData(const bluetooth::HidReport *report) {
-        auto amazon_report = reinterpret_cast<const AmazonReportData *>(&report->data);
+    void AmazonController::ParseInputReport(const u8 *report_buffer, size_t size) {
+        AMS_UNUSED(size);
+        auto report = reinterpret_cast<const AmazonReportData *>(report_buffer);
 
-        switch(amazon_report->id) {
+        switch(report->id) {
             case 0x01:
-                this->MapInputReport0x01(amazon_report); break;
+                this->MapInputReport0x01(report); break;
             case 0x02:
-                this->MapInputReport0x02(amazon_report); break;
+                this->MapInputReport0x02(report); break;
             default:
                 break;
         }
     }
 
     void AmazonController::MapInputReport0x01(const AmazonReportData *src) {
-        m_left_stick  = PackAnalogStickValues(src->input0x01.left_stick.x,  InvertAnalogStickValue(src->input0x01.left_stick.y));
-        m_right_stick = PackAnalogStickValues(src->input0x01.right_stick.x, InvertAnalogStickValue(src->input0x01.right_stick.y));
+        auto dpad = DirectionalPad(src->input0x01.dpad);
 
-        m_buttons.dpad_down  = (src->input0x01.buttons.dpad == AmazonDPad_S)  ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_SE) ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_SW);
-        m_buttons.dpad_up    = (src->input0x01.buttons.dpad == AmazonDPad_N)  ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_NE) ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_NW);
-        m_buttons.dpad_right = (src->input0x01.buttons.dpad == AmazonDPad_E)  ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_NE) ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_SE);
-        m_buttons.dpad_left  = (src->input0x01.buttons.dpad == AmazonDPad_W)  ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_NW) ||
-                               (src->input0x01.buttons.dpad == AmazonDPad_SW);
+        m_left_stick.SetValuesFrom(
+            src->input0x01.left_stick.GetX(),
+            src->input0x01.left_stick.GetYInverted()
+        );
 
-        m_buttons.A = src->input0x01.buttons.B;
-        m_buttons.B = src->input0x01.buttons.A;
-        m_buttons.X = src->input0x01.buttons.Y;
-        m_buttons.Y = src->input0x01.buttons.X;
+        m_right_stick.SetValuesFrom(
+            src->input0x01.right_stick.GetX(),
+            src->input0x01.right_stick.GetYInverted()
+        );
 
-        m_buttons.R  = src->input0x01.buttons.R1;
-        m_buttons.L  = src->input0x01.buttons.L1;
-        m_buttons.ZR = src->input0x01.right_trigger > (m_trigger_threshold * TriggerMax);
-        m_buttons.ZL = src->input0x01.left_trigger  > (m_trigger_threshold * TriggerMax);
+        SwitchButtons button_state = m_buttons;
+        button_state.Assign(SwitchButton::Down,    dpad.IsDown());
+        button_state.Assign(SwitchButton::Up,      dpad.IsUp());
+        button_state.Assign(SwitchButton::Right,   dpad.IsRight());
+        button_state.Assign(SwitchButton::Left,    dpad.IsLeft());
+        button_state.Assign(SwitchButton::A,       src->input0x01.buttons.B);
+        button_state.Assign(SwitchButton::B,       src->input0x01.buttons.A);
+        button_state.Assign(SwitchButton::X,       src->input0x01.buttons.Y);
+        button_state.Assign(SwitchButton::Y,       src->input0x01.buttons.X);
+        button_state.Assign(SwitchButton::R,       src->input0x01.buttons.R1);
+        button_state.Assign(SwitchButton::L,       src->input0x01.buttons.L1);
+        button_state.Assign(SwitchButton::ZR,      src->input0x01.right_trigger > (m_trigger_threshold * TriggerMax));
+        button_state.Assign(SwitchButton::ZL,      src->input0x01.left_trigger  > (m_trigger_threshold * TriggerMax));
+        button_state.Assign(SwitchButton::StickL,  src->input0x01.buttons.L3);
+        button_state.Assign(SwitchButton::StickR,  src->input0x01.buttons.R3);
+        button_state.Assign(SwitchButton::Plus,    src->input0x01.buttons.menu);
+        button_state.Assign(SwitchButton::Minus,   src->input0x01.buttons.back);
+        button_state.Assign(SwitchButton::Capture, src->input0x01.buttons.middle);
+        m_buttons = button_state;
 
-        m_buttons.lstick_press = src->input0x01.buttons.L3;
-        m_buttons.rstick_press = src->input0x01.buttons.R3;
-
-        m_buttons.plus  = src->input0x01.buttons.menu;
-        m_buttons.minus = src->input0x01.buttons.back;
-
-        m_buttons.capture = src->input0x01.buttons.middle;
-
-        m_battery = convert_battery_100(src->input0x01.battery);
+        auto battery_level = SwitchBatteryLevelConverter::ConvertPercentage(src->input0x01.battery);
+        m_power_info.SetBatteryLevel(battery_level);
     }
 
     void AmazonController::MapInputReport0x02(const AmazonReportData *src) {
-        m_buttons.home = src->input0x02.home;
+        m_buttons.Assign(SwitchButton::Home, src->input0x02.home);
     }
 
 }

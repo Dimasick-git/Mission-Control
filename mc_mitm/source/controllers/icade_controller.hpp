@@ -38,8 +38,7 @@ namespace ams::controller {
 
             ICadeController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
-            void ApplyButtonCombos(SwitchButtonData *buttons) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
     };
 

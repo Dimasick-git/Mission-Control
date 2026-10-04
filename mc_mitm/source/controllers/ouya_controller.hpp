@@ -68,10 +68,7 @@ namespace ams::controller {
 
             OuyaController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            RGBColour GetBodyColour()    const override { return RGBColour{0x10, 0x10, 0x10}; }
-            RGBColour GetButtonsColour() const override { return RGBColour{0xd0, 0xd0, 0xd0}; }
-
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x03(const OuyaReportData *src);

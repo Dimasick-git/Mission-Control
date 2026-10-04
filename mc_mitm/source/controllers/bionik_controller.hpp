@@ -18,18 +18,6 @@
 
 namespace ams::controller {
 
-    enum BionikDPadDirection {
-        BionikDPad_N,
-        BionikDPad_NE,
-        BionikDPad_E,
-        BionikDPad_SE,
-        BionikDPad_S,
-        BionikDPad_SW,
-        BionikDPad_W,
-        BionikDPad_NW,
-        BionikDPad_Released = 0x0f
-    };
-
     struct BionikButtonData {
         u8 A      : 1;
         u8 B      : 1;
@@ -48,12 +36,11 @@ namespace ams::controller {
         u8 L3     : 1;
         u8 R3     : 1;
         u8        : 0;
-
-        u8 dpad;
     } PACKED;
 
     struct BionikInputReport0x03 {
         BionikButtonData buttons;
+        DirectionalPadType<0, 0xF> dpad;
         AnalogStick<u8> left_stick;
         AnalogStick<u8> right_stick;
         u8 left_trigger;
@@ -88,7 +75,7 @@ namespace ams::controller {
 
             BionikController(bluetooth::Address address, HardwareID id) : EmulatedSwitchController(address, id) { }
 
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x03(const BionikReportData *src);

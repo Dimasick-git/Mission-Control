@@ -13,6 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 #include "bluetooth_mitm/bluetooth/bluetooth_types.hpp"
 
 namespace ams::mitm {
@@ -37,6 +38,7 @@ namespace ams::mitm {
             int dualsense_lightbar_brightness;
             bool dualsense_enable_player_leds;
             int dualsense_vibration_intensity;
+            int dualsense_adaptive_trigger_travel;
         } misc;
     };
 

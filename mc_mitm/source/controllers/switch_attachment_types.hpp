@@ -13,10 +13,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "controller_utils.hpp"
+#pragma once
+#include <stratosphere.hpp>
 
 namespace ams::controller {
 
+    struct SwitchAttachmentDataIn {
+        u8 data[0x139];
+    };
+    static_assert(sizeof(SwitchAttachmentDataIn) == 0x139);
 
+    struct SwitchAttachmentDataOut {
+        u8 data[0x26];
+    };
+    static_assert(sizeof(SwitchAttachmentDataOut) == 0x26);
 
 }

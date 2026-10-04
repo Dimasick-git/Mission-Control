@@ -38,18 +38,6 @@ namespace ams::controller {
         Dualshock4ReportRate_62Hz   = 16
     };
 
-    enum Dualshock4DPadDirection {
-        Dualshock4DPad_N,
-        Dualshock4DPad_NE,
-        Dualshock4DPad_E,
-        Dualshock4DPad_SE,
-        Dualshock4DPad_S,
-        Dualshock4DPad_SW,
-        Dualshock4DPad_W,
-        Dualshock4DPad_NW,
-        Dualshock4DPad_Released
-    };
-
     struct Dualshock4ButtonData {
         u8 dpad     : 4;
         u8 square   : 1;
@@ -166,7 +154,7 @@ namespace ams::controller {
         u8 _unk1[5];
 
         u8 battery_level : 4;
-        u8 usb           : 1;
+        u8 powered       : 1;
         u8 mic           : 1;
         u8 phone         : 1;
         u8               : 0;
@@ -209,25 +197,17 @@ namespace ams::controller {
             , m_lightbar_brightness(0)
             , m_rumble_state({0, 0}) { }
 
-            Result Initialize();
-            Result SetVibration(const SwitchMotorData *motor_data);
-            Result CancelVibration();
-            Result SetPlayerLed(u8 led_mask);
+            virtual Result Initialize() override;
+            virtual Result SetVibration(const SwitchMotorData *motor_data) override;
+            virtual Result CancelVibration() override;
+            virtual Result SetPlayerLed(SwitchPlayerNumber player_number) override;
             Result SetLightbarColour(RGBColour colour);
 
-            // DualShock 4 "Jet Black" stock colours
-            RGBColour GetBodyColour()      const override { return RGBColour{0x00, 0x00, 0x00}; }
-            RGBColour GetButtonsColour()   const override { return RGBColour{0xff, 0xff, 0xff}; }
-            RGBColour GetLeftGripColour()  const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
-            RGBColour GetRightGripColour() const override { return RGBColour{0x1a, 0x1a, 0x1a}; }
-
-            void ProcessInputData(const bluetooth::HidReport *report) override;
+            virtual void ParseInputReport(const u8 *report_buffer, size_t size) override;
 
         private:
             void MapInputReport0x01(const Dualshock4ReportData *src);
             void MapInputReport0x11(const Dualshock4ReportData *src);
-
-            void MapButtons(const Dualshock4ButtonData *buttons);
             
             Result GetVersionInfo(Dualshock4VersionInfo *version_info);
             Result GetCalibrationData(Dualshock4ImuCalibrationData *calibration);
