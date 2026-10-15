@@ -26,6 +26,30 @@
 
 namespace ams::mitm::bluetooth {
 
+    namespace {
+
+        // Diagnostics: the buffer size each client asks for, once per new size.
+        void TraceEventBufferSize(const char *what, ncm::ProgramId client, size_t size, size_t ours) {
+            static constinit os::SdkMutex lock;
+            static constinit size_t seen[3][4] = {};
+            const int kind = what[0] == 'c' ? 0 : (what[0] == 'h' ? 1 : 2);
+            std::scoped_lock lk(lock);
+            for (auto s : seen[kind]) {
+                if (s == size) {
+                    return;
+                }
+            }
+            for (auto &s : seen[kind]) {
+                if (s == 0) {
+                    s = size;
+                    break;
+                }
+            }
+            ams::mitm::trace::Print("%s event buffer from %016lx: %zu bytes (ours %zu)", what, client.value, size, ours);
+        }
+
+    }
+
     Result BtdrvMitmService::InitializeBluetooth(sf::OutCopyHandle out_handle) {
         ams::mitm::trace::Print("InitializeBluetooth from %016lx, %s", m_client_info.program_id.value,
                                 ams::bluetooth::core::IsInitialized() ? "again: user event" : "first: system event");
@@ -65,6 +89,7 @@ namespace ams::mitm::bluetooth {
     }
 
     Result BtdrvMitmService::GetEventInfo(sf::Out<ams::bluetooth::EventType> out_type, const sf::OutPointerBuffer &out_buffer) {
+        TraceEventBufferSize("core", m_client_info.program_id, out_buffer.GetSize(), sizeof(ams::bluetooth::EventInfo));
         R_RETURN(ams::bluetooth::core::GetEventInfo(m_client_info.program_id, out_type.GetPointer(), out_buffer.GetPointer(), out_buffer.GetSize()));
     }
 
@@ -112,6 +137,7 @@ namespace ams::mitm::bluetooth {
     }
 
     Result BtdrvMitmService::GetHidEventInfo(sf::Out<ams::bluetooth::HidEventType> out_type, const sf::OutPointerBuffer &out_buffer) {
+        TraceEventBufferSize("hid", m_client_info.program_id, out_buffer.GetSize(), sizeof(ams::bluetooth::HidEventInfo));
         R_RETURN(ams::bluetooth::hid::GetEventInfo(out_type.GetPointer(), out_buffer.GetPointer(), out_buffer.GetSize()));
     }
 
@@ -167,6 +193,7 @@ namespace ams::mitm::bluetooth {
     }
 
     Result BtdrvMitmService::GetBleManagedEventInfo(sf::Out<ams::bluetooth::BleEventType> out_type, const sf::OutPointerBuffer &out_buffer) {
+        TraceEventBufferSize("ble", m_client_info.program_id, out_buffer.GetSize(), sizeof(ams::bluetooth::BleEventInfo));
         R_RETURN(ams::bluetooth::ble::GetEventInfo(out_type.GetPointer(), out_buffer.GetPointer(), out_buffer.GetSize()));
     }
 
