@@ -18,6 +18,7 @@
 #include "../btdrv_mitm_flags.hpp"
 #include "../../controllers/controller_management.hpp"
 #include "../../utils.hpp"
+#include "../../mcmitm_trace.hpp"
 
 namespace ams::bluetooth::core {
 
@@ -206,8 +207,11 @@ namespace ams::bluetooth::core {
             } else if ((hos::GetVersion() >= hos::Version_12_0_0) && (g_current_event_type == BtdrvEventType_PairingPinCodeRequest)) {
                 HandlePinCodeRequestEventV12(&g_event_info);
             } else {
+                const auto start = os::GetSystemTick();
                 g_system_event_fwd.Signal();
                 g_data_read_event.Wait();
+                const s64 waited = (os::GetSystemTick() - start).ToTimeSpan().GetMilliSeconds();
+                ams::mitm::trace::Print("core event %d read after %lld ms", static_cast<int>(g_current_event_type), static_cast<long long>(waited));
             }
         }
 

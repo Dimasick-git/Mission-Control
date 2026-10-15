@@ -20,12 +20,15 @@
 #include "bluetooth/bluetooth_hid.hpp"
 #include "bluetooth/bluetooth_ble.hpp"
 #include "../mcmitm_initialization.hpp"
+#include "../mcmitm_trace.hpp"
 #include "../controllers/controller_management.hpp"
 #include <switch.h>
 
 namespace ams::mitm::bluetooth {
 
     Result BtdrvMitmService::InitializeBluetooth(sf::OutCopyHandle out_handle) {
+        ams::mitm::trace::Print("InitializeBluetooth from %016lx, %s", m_client_info.program_id.value,
+                                ams::bluetooth::core::IsInitialized() ? "again: user event" : "first: system event");
         if (!ams::bluetooth::core::IsInitialized()) {
             // Forward to the real function to obtain the system event handle
             os::NativeHandle handle = os::InvalidNativeHandle;
@@ -50,7 +53,9 @@ namespace ams::mitm::bluetooth {
     }
 
     Result BtdrvMitmService::EnableBluetooth() {
-        R_TRY(btdrvEnableBluetoothFwd(m_forward_service.get()));
+        const Result rc = btdrvEnableBluetoothFwd(m_forward_service.get());
+        ams::mitm::trace::Print("EnableBluetooth from %016lx rc=0x%x", m_client_info.program_id.value, rc.GetValue());
+        R_TRY(rc);
         ams::bluetooth::core::SignalEnabled();
 
         // Wait until mc.mitm module initialisation has completed before returning

@@ -18,6 +18,7 @@
 #include "mcmitm_initialization.hpp"
 #include "mcmitm_config.hpp"
 #include "mcmitm_process_monitor.hpp"
+#include "mcmitm_trace.hpp"
 
 namespace ams {
 
@@ -87,6 +88,9 @@ namespace ams {
     }
 
     void Main() {
+        mitm::trace::Initialize();
+        mitm::trace::Print("mc.mitm start");
+
         // Launch mitm and other modules
         mitm::LaunchModules();
 
@@ -124,6 +128,12 @@ namespace ams {
                 case 0:
                     pm_module.GetEventPointer()->Clear();
                     if (R_SUCCEEDED(pm_module.GetRequest(&pm_state, &pm_flags))) {
+                        mitm::trace::Print("psc state %d", static_cast<int>(pm_state));
+                        if (pm_state == psc::PmState_SleepReady || pm_state == psc::PmState_ShutdownReady) {
+                            mitm::trace::SetSuspended(true);
+                        } else if (pm_state == psc::PmState_FullAwake || pm_state == psc::PmState_MinimumAwake) {
+                            mitm::trace::SetSuspended(false);
+                        }
                         switch (pm_state) {
                             case psc::PmState_ShutdownReady:
                                 shutdown = true;

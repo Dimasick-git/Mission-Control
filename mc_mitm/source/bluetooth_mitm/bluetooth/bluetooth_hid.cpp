@@ -14,6 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bluetooth_hid.hpp"
+#include "../../mcmitm_trace.hpp"
 #include "../btdrv_mitm_flags.hpp"
 #include "../../controllers/controller_management.hpp"
 
@@ -116,8 +117,13 @@ namespace ams::bluetooth::hid {
                 break;
         }
 
+        const auto start = os::GetSystemTick();
         g_system_event_fwd.Signal();
         g_data_read_event.Wait();
+        const s64 waited = (os::GetSystemTick() - start).ToTimeSpan().GetMilliSeconds();
+        if (g_current_event_type == BtdrvHidEventType_Connection || waited > 200) {
+            ams::mitm::trace::Print("hid event %d read after %lld ms", static_cast<int>(g_current_event_type), static_cast<long long>(waited));
+        }
 
         if (g_system_event_user_fwd.GetBase()->state) {
             g_system_event_user_fwd.Signal();
