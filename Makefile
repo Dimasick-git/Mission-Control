@@ -1,6 +1,6 @@
 PROJECT_NAME := MissionControl
 MC_MITM_TID := 010000000000bd00
-MC_VERSION := 0.16.1
+MC_VERSION := 0.16.2
 
 GIT_BRANCH := $(shell git symbolic-ref --short HEAD | sed s/[^a-zA-Z0-9_-]/_/g)
 GIT_HASH := $(shell git rev-parse --short HEAD)
