@@ -61,7 +61,7 @@ namespace ams::bluetooth::hid {
 
     void SignalFakeEvent(bluetooth::HidEventType type, const void *data, size_t size) {
         g_current_event_type = type;
-        std::memcpy(&g_event_info, data, size);
+        std::memcpy(&g_event_info, data, std::min(size, sizeof(g_event_info)));
 
         g_system_event_fwd.Signal();
     }
@@ -69,8 +69,15 @@ namespace ams::bluetooth::hid {
     Result GetEventInfo(bluetooth::HidEventType *type, void *buffer, size_t size) {
         std::scoped_lock lk(g_event_info_lock);
 
+        // The client may ask for more than our event struct (the bluetooth service's event can be larger on newer
+        // firmware). Never copy past g_event_info: give what we have and zero the rest. Copying `size` bytes from
+        // g_event_info handed the reader whatever globals follow it, and the result changed with every build.
         *type = g_current_event_type;
-        std::memcpy(buffer, &g_event_info, size);
+        const size_t copy = std::min(size, sizeof(g_event_info));
+        std::memcpy(buffer, &g_event_info, copy);
+        if (size > copy) {
+            std::memset(static_cast<u8 *>(buffer) + copy, 0, size - copy);
+        }
 
         g_data_read_event.Signal();
 
